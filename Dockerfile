@@ -1,24 +1,18 @@
-# Use a base image that supports systemd, for example, Ubuntu
 FROM ubuntu:24.04
 
-# Install necessary packages
-RUN apt-get update && \
-apt-get install -y shellinabox && \
-apt-get install -y curl && \
-apt-get install -y wget && \
-apt-get install -y tar && \
-apt-get install -y cli && \
-apt-get install -y openssl && \
-apt-get install -y PHP8.3 && \
-apt-get install -y unzip && \
-apt-get install -y systemd && \
-apt-get install -y git && \
-apt-get install -y composer && \
-apt-get clean && \
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN echo 'root:root' | chpasswd
-# Expose the web-based terminal port
-EXPOSE 3200
+RUN apt-get update && apt-get install -y \
+    git curl wget nano vim python3 python3-pip sudo \
+    cmake libwebsockets-dev libjson-c-dev build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Start shellinabox
-CMD ["/usr/bin/shellinaboxd", "-t", "-s", "/:LOGIN"]
+# ttyd bauen
+RUN git clone https://github.com/tsl0922/ttyd.git /tmp/ttyd && \
+    cd /tmp/ttyd && mkdir build && cd build && \
+    cmake .. && make && make install
+
+WORKDIR /root/workspace
+
+EXPOSE 3000
+
+# Mit Basic Auth (Username: admin, Password: render123)
+CMD ["sh", "-c", "ttyd -p ${PORT:-3000} -c admin:render123 bash"]
